@@ -1,10 +1,6 @@
 # ToySTA — Toy Static Timing Analysis Engine
 
-**You build this.** The source files contain detailed hints and TODOs,
-but no implementation code. Code along phase by phase, and ask me when
-you get stuck or want a review.
-
-Targets ~500-1000 lines, C++17, CMake.
+maybe this toy project can be helpful to students who major in EDA who researches within the scope of physical synthesis algorithm development of digital IC.
 
 ## Project Structure
 
