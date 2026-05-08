@@ -4,6 +4,7 @@ namespace tsta {
 
 // === Phase 1: Implement graph construction ===
 //
+    add_cell():
 // add_cell():
 //   Move name and pins into a new Cell, push into cells_.
 //   Phase 3: use std::make_unique<Cell>, push into cells_,

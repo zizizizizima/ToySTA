@@ -1,6 +1,13 @@
 #ifndef TSTA_TIMING_GRAPH_H
 #define TSTA_TIMING_GRAPH_H
 
+#include <string>
+#include <vector>
+
+#include "types.h"
+
+using namespace std;
+
 namespace tsta {
 
 // === Phase 1: Timing Graph ===
@@ -14,27 +21,22 @@ namespace tsta {
 //   - finalize() is safe to call multiple times (rebuilds on each call)
 //
 // === Phase 1 API (build the graph) ===
-//
+    class TimingGraph {
+    public:
+        void add_cell(Cell cell);
+        void add_net(Net net);
+        void add_timing_arc(TimingArc arc);
+        void finalize();// Call this after all cells/nets/arcs are added:s
+        // Pin lookup by qualified name:
+        Pin* lookup_pin(const string& name);
+        const Pin* lookup_pin(const std::string& name) const;//函数重载
+        // Read access to internal data (for engine, reporting):
+        const std::vector<Cell>& cells() const;
+        const std::vector<Net>& nets() const;
+        const std::vector<TimingArc>& arcs() const;
 // class TimingGraph {
 // public:
-//     // Graph construction:
-//     void add_cell(std::string name, std::vector<Pin> pins);
-//     void add_net(std::string name, std::vector<std::string> pin_names);
-//     void add_timing_arc(std::string from_pin, std::string to_pin,
-//                         ArcType type, float delay);
-//
-//     // Call this after all cells/nets/arcs are added:
-//     void finalize();
-//
-//     // Pin lookup by qualified name:
-//     Pin* lookup_pin(const std::string& name);
-//     const Pin* lookup_pin(const std::string& name) const;
-//
-//     // Read access to internal data (for engine, reporting):
-//     const std::vector<Cell>& cells() const;
-//     const std::vector<Net>& nets() const;
-//     const std::vector<TimingArc>& arcs() const;
-//
+//     phase 1 API done.√
 // === Phase 2 additions (for timing propagation) ===
 //
 //     // Timing propagation graph adjacency lists.

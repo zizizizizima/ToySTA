@@ -36,6 +36,8 @@ namespace tsta {
 //   - "mutable" because propagation modifies state on a logically-const graph
 //   - "std::optional" means "not computed yet"
 //
+    /* A device instance
+    Example: U1 (AND2 gate), FF1 (flip-flop)*/
     struct Cell{
         string name;
         vector<Pin> Pins;
@@ -46,6 +48,8 @@ namespace tsta {
 //   - e.g. Cell{"U1", {Pin{"A", Input}, Pin{"B", Input}, Pin{"Y", Output}}}
 //   - Phase 3: pins stay as std::vector<Pin> (value semantics inside Cell)
 
+    /*A delay path within a cell (input pin → output  pin)
+    Example: U1/A → U1/Y*/
     struct TimingArc{
         string from_pin;
         string to_pin;
@@ -59,6 +63,9 @@ namespace tsta {
 //     float delay;            // in nanoseconds
 //   - Represents a timing path from an input pin to an output pin within a cell.
 //
+
+    /*A wire between cells
+    Example: Connects U1/Y to U2/A*/
     struct Net{
         string name;
         vector<string> pin_names;
