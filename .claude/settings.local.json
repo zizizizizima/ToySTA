@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"D:\\\\directories\\\\C++\\\\ToySTA\" -Force -Recurse)",
+      "Bash(Select-Object FullName, Mode, Length, LastWriteTime)",
+      "Bash(Format-Table -AutoSize -Wrap)",
+      "Bash(cmake -B build)",
+      "Bash(cmake --build build)",
+      "PowerShell(Get-Command *)",
+      "Bash(pacman -Qs cmake)",
+      "Bash(g++ --version)",
+      "Read(//c/msys64/usr/bin/**)",
+      "Bash(/c/msys64/usr/bin/pacman --version)",
+      "Bash(/c/msys64/usr/bin/pacman *)",
+      "Bash(export PATH=\"/c/msys64/ucrt64/bin:/c/msys64/usr/bin:/usr/bin:/bin\")",
+      "Bash(\"build/ToySTA.exe\")",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
