@@ -66,7 +66,7 @@ namespace tsta {
 
 
         private:
-            vector<Cell> cells_;
+            vector<Cell> cells_;// Phase 3: vector<unique_ptr<Cell>>
             vector<Net> nets_;
             vector<TimingArc> arcs_;
             unordered_map<string, Pin*> pin_map_;  // built in finalize()
@@ -85,13 +85,6 @@ namespace tsta {
 //     add_cell() returns Cell& instead of void
 //     Iteration becomes cell->pins / cell->name instead of cell.pins / cell.name
 //
-// private:
-//     std::vector<Cell> cells_;       // Phase 3: vector<unique_ptr<Cell>>
-//     std::vector<Net> nets_;
-//     std::vector<TimingArc> arcs_;
-//     std::unordered_map<std::string, Pin*> pin_map_;  // built in finalize()
-//     std::unordered_map<std::string, std::vector<TimingEdge>> fanout_;  // Phase 2
-//     std::unordered_map<std::string, std::vector<TimingEdge>> fanin_;   // Phase 2
 // };
 
 // #include headers you need:
