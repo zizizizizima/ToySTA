@@ -16,67 +16,46 @@ namespace tsta {
 // TODO: Define these types:
 
     enum class PinDir {Input, Output};
-// enum class PinDir { Input, Output }
-//   - Every pin has a direction.
     enum class ArcType { Combinational, Setup, Hold };
-// enum class ArcType { Combinational, Setup, Hold }
-//   - What kind of timing arc is this? Start with just Combinational.
+    //e.g. Pin{"A", Input}
     struct Pin{
         string name;
         PinDir dir;
     };
-// struct Pin {
-//     std::string name;
-//     PinDir dir;
-//   - A pin belongs to a cell (e.g., "A", "B", "Y").
-//   - Don't store the cell name here — the graph's lookup map will handle
-//     qualified names like "U1/A".
-//
+
 //   Phase 2 will add: mutable std::optional<float> arrival_time, req_time
 //   - "mutable" because propagation modifies state on a logically-const graph
 //   - "std::optional" means "not computed yet"
 //
-    /* A device instance
-    Example: U1 (AND2 gate), FF1 (flip-flop)*/
+    /* A device instance like U1 (AND2 gate), FF1 (flip-flop)
+    e.g.Cell{"U1", {Pin{"A", Input}, Pin{"B", Input}, Pin{"Y", Output}}}*/
     struct Cell{
         string name;
         vector<Pin> Pins;
     };
-// struct Cell {
-//     std::string name;
-//     std::vector<Pin> pins;
-//   - e.g. Cell{"U1", {Pin{"A", Input}, Pin{"B", Input}, Pin{"Y", Output}}}
 //   - Phase 3: pins stay as std::vector<Pin> (value semantics inside Cell)
 
-    /*A delay path within a cell (input pin → output  pin)
+    /*A delay path WITHIN a cell (input pin → output  pin)
     Example: U1/A → U1/Y*/
+    /*RULE: TimingArc: Each TimingArc directly creates one edge from its from_pin to its to_pin with the arc's delay.*/
     struct TimingArc{
         string from_pin;
         string to_pin;
         ArcType type;
         float delay;
     };
-// struct TimingArc {
-//     std::string from_pin;   // qualified name, e.g. "U1/A"
-//     std::string to_pin;     // qualified name, e.g. "U1/Y"
-//     ArcType type;
-//     float delay;            // in nanoseconds
-//   - Represents a timing path from an input pin to an output pin within a cell.
-//
 
     /*A wire between cells
     Example: Connects U1/Y to U2/A*/
+    /*RULE: Net: Each net connects an output pin (driver)
+   to all input pins (loads) on that net, with zero
+  delay (ideal wire assumption — no RC delay yet).*/
     struct Net{
         string name;
         vector<string> pin_names;
         vector<Pin*> connections;
     };
-// struct Net {
-//     std::string name;
-//     std::vector<std::string> pin_names;  // pin names during construction
-//     std::vector<Pin*> connections;       // resolved by finalize()
-//   - A wire connecting pins (usually one output to one or more inputs).
-//   - During graph building, store pin names as strings.
+
 //   - finalize() resolves them to Pin* pointers.
 // }
 
