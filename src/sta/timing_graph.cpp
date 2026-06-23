@@ -18,10 +18,30 @@ namespace tsta {
         arcs_.push_back(arc);
     }
 
+    //finalize() builds the timing graph's internal data structures for propagation.
+    void TimingGraph::finalize(void){
+        //1. Clear pin_map_, fanout_, fanin_
+        pin_map_.clear();
+        fanout_.clear();
+        fanin_.clear();
+        // 2. For each cell, for each pin:
+        //     qualified_name = cell.name + "/" + pin.name
+        //     pin_map_[qualified_name] = &pin
+        //     reset pin.arrival_time and pin.req_time
+        string qualified_name;
+        for (auto& cell : cells_) {
+            for (auto& pin : cell.Pins) {
+                qualified_name = cell.name + "/" + pin.name;
+                pin_map_[qualified_name] = &pin;
+                pin.arrival_time = nullopt;
+                pin.req_time = nullopt;
+            }
+        }
+    }
 
 //   Phase 3: use std::make_unique<Cell>, push into cells_,
 //            return Cell& (deref the unique_ptr).
-//
+
 //   connections vector will be filled during finalize().
 // finalize():
 //   1. Clear pin_map_, fanout_, fanin_
@@ -39,6 +59,7 @@ namespace tsta {
 //        c) For each driver, for each load:
 //             fanout_[driver].push_back({load, 0.0f})
 //             fanin_[load].push_back({driver, 0.0f})
+
     //Find the name in pin_map_, return the Pin* (or nullptr).
     Pin* TimingGraph::lookup_pin(const string& name){
         auto it = pin_map_.find(name);
@@ -49,6 +70,7 @@ namespace tsta {
         return it != pin_map_.end() ? it->second : nullptr;
     }
 
+    //Look up in the map, return the vector (or empty vector if not found). Use a static empty vector for the not-found case to avoid returning nullptr.
     const vector<TimingGraph::TimingEdge>& TimingGraph::fanout(const string& pin) const{
         static const vector<TimingGraph::TimingEdge> empty;
         auto it = fanout_.find(pin);
@@ -60,8 +82,6 @@ namespace tsta {
         auto it = fanin_.find(pin);
         return it != fanin_.end() ? it->second : empty;
     }
-// fanout() / fanin() (Phase 2):
-//   Look up in the map, return the vector (or empty vector if not found).
-//   Use a static empty vector for the not-found case to avoid returning nullptr.
+
 
 } // namespace tsta

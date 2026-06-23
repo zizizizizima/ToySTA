@@ -8,6 +8,7 @@ add_executable(ToySTA
     src/main.cpp
     src/sta/timing_graph.cpp
     src/sta/timing_engine.cpp
+    src/sta/circuit_reader.cpp
 )
 
 target_include_directories(ToySTA PRIVATE src)

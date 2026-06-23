@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 
 using namespace std;
 
@@ -21,6 +22,8 @@ namespace tsta {
     struct Pin{
         string name;
         PinDir dir;
+        mutable optional<float> arrival_time;
+        mutable optional<float> req_time;
     };
 
 //   Phase 2 will add: mutable std::optional<float> arrival_time, req_time

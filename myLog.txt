@@ -1,0 +1,9 @@
+真正的**邻接表（adjacency list）**其实是你代码里的 fanout_ 和 fanin_
+
+fanout_["U1/A"] = {{"U1/Y", 0.3f}, ...} → 从 U1/A 出发的边
+fanin_["U2/A"] = {{"U1/Y", 0.0f}, ...} → 到达 U2/A 的边
+你用 pin_map_ 来完成步骤 1（名字解析），然后在 finalize() 里拿解析好的指针去填 fanout_ 和 fanin_（步骤 2），邻接表就建好了。
+
+6.21
+下一个问题：为什么要用 optional<float> arrival_time;  // Phase 2: timing state
+    optional<float> req_time;

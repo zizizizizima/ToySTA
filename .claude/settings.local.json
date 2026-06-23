@@ -16,7 +16,12 @@
       "Bash(\"build/ToySTA.exe\")",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "PowerShell(\\(Get-Item \"$env:APPDATA\\\\npm\\\\node_modules\\\\@anthropic-ai\\\\claude-code\\\\bin\\\\claude.exe\"\\).VersionInfo | Select-Object FileDescription, ProductVersion, FileVersion)",
+      "PowerShell(Get-Process -Name \"node\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Test-Path \"$env:APPDATA\\\\npm\\\\node_modules\\\\@anthropic-ai\\\\claude-code\\\\bin\\\\claude.exe\")",
+      "PowerShell(\\(Get-CimInstance Win32_ComputerSystem\\).SystemType)",
+      "PowerShell(\\(Get-Item \"$env:APPDATA\\\\npm\\\\node_modules\\\\@anthropic-ai\\\\claude-code\\\\bin\\\\claude.exe\"\\).Length)"
     ]
   }
 }
