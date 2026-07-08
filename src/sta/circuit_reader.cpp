@@ -125,12 +125,12 @@ void CircuitReader::parse_arc(const std::string& line, TimingGraph& tg) {
 }
 
 // ===================================================================
-//  parse_net()  —  NET <name> (<pin_name1> <pin_name2> ...)
+//  parse_net()  —  NET <name> (<driver> <load1> <load2> ...)
 // ===================================================================
 //
 // Example line:  "NET N1 (U1/Y U2/A)"
-//                        ^^^  ^^^^^^^^^
-//                       name   pin list inside parens
+//                        ^^^  ^^^^^^^^^^^^^
+//                       name   driver  loads
 //
 // Step-by-step:
 //   1. Strip "NET " from the beginning (line.substr(4))
@@ -138,8 +138,9 @@ void CircuitReader::parse_arc(const std::string& line, TimingGraph& tg) {
 //   3. Extract the parenthesized part with strip_parens()
 //      e.g. strip_parens("(U1/Y U2/A)") → "U1/Y U2/A"
 //   4. Split by ' '  (space, NOT comma) to get individual pin names
-//   5. Build Net{net_name, pin_names_vector} — the connections vector
-//      is filled in by TimingGraph::finalize(), so you don't fill it here
+//   5. The first token is the driver (an Output pin); the rest are loads.
+//      Build Net{net_name, driver, loads_vector}. The qualified names are
+//      later resolved to Pin* by TimingGraph::finalize() via pin_map_.
 //   6. Call tg.add_net(net)
 //
 // Note: Net pins are space-separated (CELL pins are comma-separated).
@@ -153,8 +154,11 @@ void CircuitReader::parse_net(const std::string& line, TimingGraph& tg) {
     //   auto paren_pos = body.find('(');
     //   string net_name = trim(body.substr(0, paren_pos));
     //   string pin_list = strip_parens(body.substr(paren_pos));
-    //   auto pin_names = split(pin_list, ' ');
-    //   tg.add_net({net_name, pin_names});
+    //   auto tokens = split(pin_list, ' ');
+    //   // First token is the driver pin, rest are load pins:
+    //   string driver = tokens[0];
+    //   vector<string> loads(tokens.begin() + 1, tokens.end());
+    //   tg.add_net({net_name, driver, loads});
 
     std::cerr << "CircuitReader::parse_net: not yet implemented.\n";
 }

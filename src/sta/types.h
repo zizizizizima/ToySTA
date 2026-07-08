@@ -17,11 +17,11 @@ namespace tsta {
 // TODO: Define these types:
 
     enum class PinDir {Input, Output};
-    enum class ArcType { Combinational, Setup, Hold };
+    enum class ArcType { Combinational, Setup, Hold };//目前没用到
     //e.g. Pin{"A", Input}
     struct Pin{
         string name;
-        PinDir dir;
+        PinDir dir;  //目前没用到
         mutable optional<float> arrival_time;
         mutable optional<float> req_time;
     };
@@ -55,8 +55,8 @@ namespace tsta {
   delay (ideal wire assumption — no RC delay yet).*/
     struct Net{
         string name;
-        vector<string> pin_names;
-        vector<Pin*> connections;
+        string from_pin;
+        vector<string> to_pins;
     };
 
 //   - finalize() resolves them to Pin* pointers.

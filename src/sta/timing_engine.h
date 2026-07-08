@@ -1,15 +1,25 @@
 #ifndef TSTA_TIMING_ENGINE_H
 #define TSTA_TIMING_ENGINE_H
 
+#include "sta/timing_graph.h"
+
 namespace tsta {
 
 // === Phase 2: Timing Propagation Engine ===
 //
 // Takes a finalized TimingGraph and computes timing values.
-//
+    class TimingEngine{
+        public:
+            //Forward propagation: computes arrival_time for all pins.
+            void propagate_arrival_time(TimingGraph& tg);
+            //Backward propagation: computes req_time for all pins.
+            void propagate_required_time(TimingGraph& tg, float clock_period);
+            //Slack = RAT - AT (negative = setup timing violation)
+            static float slack(const Pin& pin);
+    };
 // class TimingEngine {
 // public:
-//     // Forward propagation: computes arrival_time for all pins.
+//     // 
 //     //   Startpoints (pins with no fanin) get AT = 0
 //     //   Then propagate forward: AT(succ) = max(AT(pred) + edge.delay)
 //     //

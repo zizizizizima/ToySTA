@@ -1,3 +1,5 @@
+# Collaboration Approach (in Terms of Claude)
+Assist the user by modifying hints, comments, or offering design direction, rather than writing code directly.
 # ToySTA: Toy Static Timing Analysis
 
 ## Project Goal

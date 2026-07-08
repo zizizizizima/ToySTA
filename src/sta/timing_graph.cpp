@@ -19,6 +19,7 @@ namespace tsta {
     }
 
     //finalize() builds the timing graph's internal data structures for propagation.
+    //我默认经过电路读取之后，timinggraph的所有矢量私有成员cells_、nets_、arcs_的pin_name都是合法的qualified name，形如"U1/A"。
     void TimingGraph::finalize(void){
         //1. Clear pin_map_, fanout_, fanin_
         pin_map_.clear();
@@ -37,6 +38,20 @@ namespace tsta {
                 pin.req_time = nullopt;
             }
         }
+        // 3. For each arc:
+        // fanout_[from_pin].push_back({to_pin, delay})
+        // fanin_[to_pin].push_back({from_pin, delay})
+        for (const auto& arc : arcs_){
+            fanout_[arc.from_pin].push_back({arc.to_pin, arc.delay});
+            fanin_[arc.to_pin].push_back({arc.from_pin, arc.delay});
+        }
+        // 4. For each net:
+        for(const auto& net : nets_){
+            for(const auto& to_pin : net.to_pins){
+                fanout_[net.from_pin].push_back({to_pin, 0.0f});
+                fanin_[to_pin].push_back({net.from_pin, 0.0f});
+            }
+        }                    
     }
 
 //   Phase 3: use std::make_unique<Cell>, push into cells_,
@@ -44,22 +59,7 @@ namespace tsta {
 
 //   connections vector will be filled during finalize().
 // finalize():
-//   1. Clear pin_map_, fanout_, fanin_
-//   2. For each cell, for each pin:
-//        qualified_name = cell.name + "/" + pin.name
-//        pin_map_[qualified_name] = &pin
-//        reset pin.arrival_time and pin.req_time (Phase 2)
-//   3. For each arc:
-//        fanout_[from_pin].push_back({to_pin, delay})
-//        fanin_[to_pin].push_back({from_pin, delay})
-//   4. For each net:
-//        a) Resolve pin names to Pin* pointers:
-//             for each pin_name: lookup in pin_map_, push into net.connections
-//        b) Collect driver pins (PinDir::Output) and load pins (everything else)
-//        c) For each driver, for each load:
-//             fanout_[driver].push_back({load, 0.0f})
-//             fanin_[load].push_back({driver, 0.0f})
-
+ 
     //Find the name in pin_map_, return the Pin* (or nullptr).
     Pin* TimingGraph::lookup_pin(const string& name){
         auto it = pin_map_.find(name);

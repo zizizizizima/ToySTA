@@ -7,3 +7,60 @@ fanin_["U2/A"] = {{"U1/Y", 0.0f}, ...} → 到达 U2/A 的边
 6.21
 下一个问题：为什么要用 optional<float> arrival_time;  // Phase 2: timing state
     optional<float> req_time;
+
+6.30
+ Step 1：补全头文件 timing_engine.h 的类声明
+
+  你现在的情况是 class TimingEngine 体是空的，下面一大块被注释掉的接口定义。把这部分取消注释、整理成真正的类声明：
+
+  class TimingEngine {
+  public:
+      // 前向传播：计算所有 pin 的 arrival_time
+      void propagate_arrival_time(TimingGraph& tg);
+
+      // 反向传播：计算所有 pin 的 req_time
+      void propagate_required_time(TimingGraph& tg, float clock_period);
+
+      // 计算单个 pin 的 slack = RAT - AT
+      static float slack(const Pin& pin);
+  };
+
+  提示：
+  - slack 是 static 的，因为它不依赖 TimingEngine 对象的任何状态，只操作传入的 Pin
+  - propagate_* 接收 TimingGraph&，通过其 fanout()/fanin()/lookup_pin() 接口操作
+
+  ---
+  Step 2：实现 timing_engine.cpp
+
+  2a. propagate_arrival_time — 关键代码骨架
+
+  void TimingEngine::propagate_arrival_time(TimingGraph& tg) {
+      // 1. 重置所有 arrival_time
+      for (const auto& cell : tg.cells())
+          for (const auto& pin : cell.Pins)
+              pin.arrival_time.reset();
+
+      // 2. 找到 startpoints 并 seed
+      queue<string_view> worklist;
+      for (const auto& cell : tg.cells())
+          for (const auto& pin : cell.Pins) {
+              string qn = cell.name + "/" + pin.name;
+              if (tg.fanin(qn).empty()) {          // ← 没有扇入 => startpoint
+                  pin.arrival_time = 0.0f;          // ← seed
+                  worklist.push(qn);
+              }
+          }
+
+      // 3. Worklist 主循环
+      while (!worklist.empty()) {
+          // pop...
+          // 遍历 tg.fanout(cur)
+          //   new_at = cur_at + edge.delay
+          //   if (new_at > dst_arrival) → 更新并推入 worklist
+      }
+  }
+
+7.4
+bellman ford算法
+SPFA
+Dijkstra
