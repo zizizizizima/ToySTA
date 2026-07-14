@@ -33,17 +33,31 @@ namespace tsta {
 //   6. Return clock_period
 //
 float CircuitReader::read_file(const std::string& filename, TimingGraph& tg) {
-    // TODO: implement
-    // Hint: the line dispatch pattern looks like:
-    //
-    //   if (line.compare(0, 4, "CELL") == 0)
-    //       parse_cell(line, tg);
-    //   else if (line.compare(0, 3, "ARC") == 0)
-    //       parse_arc(line, tg);
-    //   ...
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: could not open file: " << filename << '\n';
+        return 0.0f;
+    }
 
-    std::cerr << "CircuitReader::read_file: not yet implemented.\n";
-    return 0.0f;
+    float clock_period = 0.0f;
+    std::string line;
+    while (std::getline(file, line)) {
+        std::string trimmed = trim(line);
+        if (trimmed.empty() || trimmed[0] == '#')
+            continue;
+
+        if (trimmed.compare(0, 4, "CELL") == 0)
+            parse_cell(trimmed, tg);
+        else if (trimmed.compare(0, 3, "ARC") == 0)
+            parse_arc(trimmed, tg);
+        else if (trimmed.compare(0, 3, "NET") == 0)
+            parse_net(trimmed, tg);
+        else if (trimmed.compare(0, 12, "CLOCK_PERIOD") == 0)
+            clock_period = parse_clock_period(trimmed);
+        else
+            std::cerr << "Warning: unrecognized directive: " << trimmed << '\n';
+    }
+    return clock_period;
 }
 
 // ===================================================================
@@ -66,23 +80,19 @@ float CircuitReader::read_file(const std::string& filename, TimingGraph& tg) {
 //   6. Build Cell{cell_name, pins_vector} and call tg.add_cell(cell)
 //
 void CircuitReader::parse_cell(const std::string& line, TimingGraph& tg) {
-    // TODO: implement
-    // Useful helper calls you'll need:
-    //
-    //   string body = line.substr(5);   // skip "CELL "
-    //   auto paren_pos = body.find('(');
-    //   string cell_name = trim(body.substr(0, paren_pos));
-    //   string pin_list = strip_parens(body.substr(paren_pos));
-    //   auto tokens = split(pin_list, ',');
-    //   for (auto& tok : tokens) {
-    //       tok = trim(tok);
-    //       PinDir dir = PinDir::Input;
-    //       if (tok[0] == '>') { dir = PinDir::Output; tok = tok.substr(1); }
-    //       pins.push_back({tok, dir});
-    //   }
-    //   tg.add_cell({cell_name, pins});
-
-    std::cerr << "CircuitReader::parse_cell: not yet implemented.\n";
+    std::string body = line.substr(5);   // skip "CELL "
+    auto paren_pos = body.find('(');
+    std::string cell_name = trim(body.substr(0, paren_pos));
+    std::string pin_list = strip_parens(body.substr(paren_pos));
+    auto tokens = split(pin_list, ',');
+    std::vector<Pin> pins;
+    for (auto& tok : tokens) {
+        tok = trim(tok);
+        PinDir dir = PinDir::Input;
+        if (tok[0] == '>') { dir = PinDir::Output; tok = tok.substr(1); }
+        pins.push_back({tok, dir});
+    }
+    tg.add_cell({cell_name, pins});
 }
 
 // ===================================================================
@@ -109,19 +119,14 @@ void CircuitReader::parse_cell(const std::string& line, TimingGraph& tg) {
 //     -> You can wrap it in try/catch or just let it crash for now
 //
 void CircuitReader::parse_arc(const std::string& line, TimingGraph& tg) {
-    // TODO: implement
-    // Useful helper calls you'll need:
-    //
-    //   string body = line.substr(4);   // skip "ARC "
-    //   auto arrow = body.find(" -> ");
-    //   string from_pin = trim(body.substr(0, arrow));
-    //   string rest = trim(body.substr(arrow + 4));
-    //   auto parts = split(rest, ' ');
-    //   string to_pin = parts[0];
-    //   float delay = stof(parts[1]);
-    //   tg.add_timing_arc({from_pin, to_pin, ArcType::Combinational, delay});
-
-    std::cerr << "CircuitReader::parse_arc: not yet implemented.\n";
+    std::string body = line.substr(4);   // skip "ARC "
+    auto arrow = body.find(" -> ");
+    std::string from_pin = trim(body.substr(0, arrow));
+    std::string rest = trim(body.substr(arrow + 4));
+    auto parts = split(rest, ' ');
+    std::string to_pin = parts[0];
+    float delay = std::stof(parts[1]);
+    tg.add_timing_arc({from_pin, to_pin, ArcType::Combinational, delay});
 }
 
 // ===================================================================
@@ -147,20 +152,14 @@ void CircuitReader::parse_arc(const std::string& line, TimingGraph& tg) {
 // Different delimiters for different purposes!
 //
 void CircuitReader::parse_net(const std::string& line, TimingGraph& tg) {
-    // TODO: implement
-    // Useful helper calls:
-    //
-    //   string body = line.substr(4);   // skip "NET "
-    //   auto paren_pos = body.find('(');
-    //   string net_name = trim(body.substr(0, paren_pos));
-    //   string pin_list = strip_parens(body.substr(paren_pos));
-    //   auto tokens = split(pin_list, ' ');
-    //   // First token is the driver pin, rest are load pins:
-    //   string driver = tokens[0];
-    //   vector<string> loads(tokens.begin() + 1, tokens.end());
-    //   tg.add_net({net_name, driver, loads});
-
-    std::cerr << "CircuitReader::parse_net: not yet implemented.\n";
+    std::string body = line.substr(4);   // skip "NET "
+    auto paren_pos = body.find('(');
+    std::string net_name = trim(body.substr(0, paren_pos));
+    std::string pin_list = strip_parens(body.substr(paren_pos));
+    auto tokens = split(pin_list, ' ');
+    std::string driver = tokens[0];
+    std::vector<std::string> loads(tokens.begin() + 1, tokens.end());
+    tg.add_net({net_name, driver, loads});
 }
 
 // ===================================================================
@@ -176,12 +175,8 @@ void CircuitReader::parse_net(const std::string& line, TimingGraph& tg) {
 //   4. Return the float
 //
 float CircuitReader::parse_clock_period(const std::string& line) {
-    // TODO: implement
-    //   string body = line.substr(13);  // skip "CLOCK_PERIOD "
-    //   return stof(trim(body));
-
-    std::cerr << "CircuitReader::parse_clock_period: not yet implemented.\n";
-    return 0.0f;
+    std::string body = line.substr(13);  // skip "CLOCK_PERIOD "
+    return std::stof(trim(body));
 }
 
 // ===================================================================
@@ -200,8 +195,11 @@ float CircuitReader::parse_clock_period(const std::string& line) {
 // is found, they return string::npos — handle that edge case!
 //
 std::string CircuitReader::trim(const std::string& str) {
-    // TODO: implement
-    return str;
+    auto start = str.find_first_not_of(" \t\r\n");
+    if (start == std::string::npos)
+        return "";
+    auto end = str.find_last_not_of(" \t\r\n");
+    return str.substr(start, end - start + 1);
 }
 
 // ===================================================================
@@ -220,7 +218,8 @@ std::string CircuitReader::trim(const std::string& str) {
 //   str.substr(1, 0) is fine, returns "".
 //
 std::string CircuitReader::strip_parens(const std::string& str) {
-    // TODO: implement
+    if (str.size() >= 2 && str[0] == '(' && str[str.size() - 1] == ')')
+        return str.substr(1, str.size() - 2);
     return str;
 }
 
@@ -255,8 +254,18 @@ std::string CircuitReader::strip_parens(const std::string& str) {
 // Add a check:  if (token.empty()) continue;
 //
 std::vector<std::string> CircuitReader::split(const std::string& str, char delimiter) {
-    // TODO: implement
-    return {};
+    std::vector<std::string> result;
+    size_t start = 0, end;
+    while ((end = str.find(delimiter, start)) != std::string::npos) {
+        std::string token = trim(str.substr(start, end - start));
+        if (!token.empty())
+            result.push_back(token);
+        start = end + 1;
+    }
+    std::string token = trim(str.substr(start));
+    if (!token.empty())
+        result.push_back(token);
+    return result;
 }
 
 // ===================================================================

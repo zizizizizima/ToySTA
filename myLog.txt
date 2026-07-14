@@ -64,3 +64,80 @@ fanin_["U2/A"] = {{"U1/Y", 0.0f}, ...} → 到达 U2/A 的边
 bellman ford算法
 SPFA
 Dijkstra
+
+7.13
+问题 1：这不是 TimingEngine 的成员函数 ❌
+     
+  你写的是命名空间 tsta 下的自由函数：
+     
+  vector<string> trace_critical_path(const TimingGraph& tg){  // 自由函数
+
+  但头文件里注释的声明是 TimingEngine 的成员函数：
+
+  std::vector<std::string> trace_critical_path(
+      const TimingGraph& tg, const std::string& endpoint) const;  // 成员函数
+
+  至少加 TimingEngine:: 前缀：
+  vector<string> TimingEngine::trace_critical_path(const TimingGraph& tg){
+
+  ---
+  问题 2：auto-detect endpoint vs 作为参数传入 🤔
+
+  你写的：「访问fanin_，寻找没有fanout的pin作为终点」
+
+  这里有两个子问题：
+
+  a) 你访问不了 fanin_ — fanin_ 是 TimingGraph 的私有成员。要用 tg.fanin(name) 和 tg.fanout(name) 公共接口。
+
+  b) "自动找终点" vs "传参指定终点"
+
+  ┌─────────────────────────────┬──────────────────────────────────────────────┬─────────────────────────────────────────────────┐
+  │            方案             │                     优点                     │                      缺点                       │
+  ├─────────────────────────────┼──────────────────────────────────────────────┼─────────────────────────────────────────────────┤
+  │ 你的：(tg) 自动找           │ 调用方便，不用自己传                         │ 假如多个 endpoint 都有负 slack，该 trace 哪个？ │
+  ├─────────────────────────────┼──────────────────────────────────────────────┼─────────────────────────────────────────────────┤
+  │ 原设计：(tg, endpoint) 指定 │ 精确控制从哪开始 trace，可逐个 endpoint 调用 │ 调用前得先知道有哪些 endpoint                   │
+  └─────────────────────────────┴──────────────────────────────────────────────┴─────────────────────────────────────────────────┘
+
+  推荐原设计 (tg, endpoint)，原因是：
+  - 在 real STA 中，你会对所有 endpoint 都 trace 一遍（report_timing）
+  - print_report() 里会这么用：先找到 slack 最差的 endpoint，然后 trace_critical_path(tg, worst_endpoint)
+  - 职责单一：trace 就只是 trace，不负责找 endpoint
+
+  如果你想要一个"自动选最差 endpoint 然后 trace"的便利包装，可以在 print_report() 里做，trace_critical_path 本身保持参数化：
+
+  // 核心：从指定 endpoint 回溯
+  vector<string> trace_critical_path(const TimingGraph& tg, const string& endpoint);
+
+  // 包装：自动选 slack 最差的 endpoint（在 print_report 里实现）
+
+  ---
+  问题 3：代码还缺 reverse 和需要的头文件
+
+  回溯时是从 endpoint → startpoint（反向），最后要 reverse：
+  #include <algorithm>  // for std::reverse
+
+  ---
+  英语纠正
+
+  ▎ 访问fanin_,寻找没有fanout的pin作为终点
+
+  → "Find endpoints (pins with no fanout) by checking tg.fanout(pin_name)"
+
+  ---
+  总结：建议这么写声明
+
+  先恢复头文件的声明（取消注释 timing_engine.h:60-61）：
+
+  std::vector<std::string> trace_critical_path(
+      const TimingGraph& tg, const std::string& endpoint) const;
+
+  然后在 timing_engine.cpp 里：
+
+  vector<string> TimingEngine::trace_critical_path(
+      const TimingGraph& tg, const string& endpoint) const
+  {
+      // 实现
+  }
+
+  要不要我帮你把头文件恢复声明，然后写出 trace_critical_path 的完整实现？

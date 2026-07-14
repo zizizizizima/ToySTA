@@ -14,14 +14,33 @@ namespace tsta {
 //
 // Example .cir file:
 //
-//     CELL U1 (A, B, >Y)
-//     ARC U1/A -> U1/Y 0.3
-//     ARC U1/B -> U1/Y 0.3
-//     CELL U2 (A, B, >Y)
-//     ARC U2/A -> U2/Y 0.5
-//     ARC U2/B -> U2/Y 0.5
-//     NET N1 (U1/Y U2/A)
-//     CLOCK_PERIOD 2.0
+//     # Two flip-flops with diverging combinational paths between them.
+//     # Critical path goes through the slower path (INV1).
+//
+//     CELL FF1 (CK, D, >Q)
+//     ARC FF1/CK -> FF1/Q 0.3
+//     CELL BUF1 (A, >Y)
+//     ARC BUF1/A -> BUF1/Y 0.2
+//     CELL INV1 (A, >Y)
+//     ARC INV1/A -> INV1/Y 0.5
+//     CELL OR2 (A, B, >Y)
+//     ARC OR2/A -> OR2/Y 0.4
+//     ARC OR2/B -> OR2/Y 0.4
+//     CELL FF2 (CK, D, >Q)
+//     ARC FF2/CK -> FF2/Q 0.3
+//     NET N1 (FF1/Q BUF1/A INV1/A)
+//     NET N2 (BUF1/Y OR2/A)
+//     NET N3 (INV1/Y OR2/B)
+//     NET N4 (OR2/Y FF2/D)
+//     CLOCK_PERIOD 5.0
+//
+// Timing diagram:
+//   FF1/CK ─0.3→ FF1/Q ─┬─0.2→ BUF1/Y ─0.0→ OR2/A ─0.4→ OR2/Y ─0.0→ FF2/D
+//                        │                                            ↑
+//                        └─0.5→ INV1/Y ─0.0→ OR2/B ─0.4─── max(0.6,0.9) ┘
+//   Critical path: FF1 → INV1 (0.8 ns) → OR2 (1.2 ns) — total 1.2 ns
+//   Slack at FF2/D: 5.0 - 1.2 = 3.8 ns
+//   (If CLOCK_PERIOD were 1.0, slack = -0.2 ns — a setup violation)
 //
 // See CLAUDE.md for full format reference.
 //

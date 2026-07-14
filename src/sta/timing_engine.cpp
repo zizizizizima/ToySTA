@@ -1,8 +1,12 @@
 #include "sta/timing_engine.h"
 #include "sta/timing_graph.h"
 #include <queue>
+#include <limits>
+#include <algorithm> // for std::reverse
+#include <iostream>
 
 using namespace std;
+
 namespace tsta {
     // === Phase 2: Implement propagation ===
     // propagate_arrival_time():
@@ -56,6 +60,7 @@ namespace tsta {
         }
     }
 
+    //模型简化，默认在单时钟域下进行计算
     void TimingEngine::propagate_required_time(TimingGraph& tg, float clock_period){
         for(const auto& cell : tg.cells()){
             for(const auto& pin : cell.Pins){
@@ -96,42 +101,77 @@ namespace tsta {
           }
         }
     }
+    
+    float TimingEngine::slack(const Pin* pin) {
+        if (pin->arrival_time.has_value() && pin->req_time.has_value()) {
+            return pin->req_time.value() - pin->arrival_time.value();
+        } else {
+            return numeric_limits<float>::max();
+        }
+    }
 
+    vector<string> TimingEngine::trace_critical_path(const TimingGraph& tg, const string& endpoint) const {
+        vector<TimingGraph::TimingEdge> fanin_edges = tg.fanin(endpoint);
+        vector<string> path;
+        path.push_back(endpoint);
 
-//
-// propagate_required_time():
-//   Same structure but:
-//   1. Find endpoints (fanout(qn).empty())
-//   2. Seed: endpoint.req_time = clock_period
-//   3. Worklist loop:
-//        pop cur, get its RAT
-//        for each edge in tg.fanin(cur):
-//            new_rat = RAT - edge.delay
-//            if new_rat < src.req_time (or src hasn't been set):
-//                src.req_time = new_rat
-//                push edge.to_pin to worklist  // note: to_pin is the src here
-//
-// slack():
-//   If both arrival_time and req_time have values: return req - arrival
-//   Otherwise: return std::numeric_limits<float>::max()
-//
-// === Phase 4: Implement reporting ===
-//
-// trace_critical_path():
-//   Start from endpoint, walk backward:
-//     for each fanin edge, look up the source pin, compute its slack
-//     pick the one with the smallest slack
-//     add it to path, set current = that pin
-//     stop when fanin is empty (reached startpoint)
-//   Reverse the path before returning.
-//
-//   Edge case: if multiple predecessors have the same slack,
-//   any one is fine (they're all equally critical).
-//
-// print_report():
-//   Use std::vector<std::pair<std::string, float>> to collect pin_slacks.
-//   Use std::sort with a lambda that compares .second.
-//   Print "Worst slacks:" header, then first 5 entries.
-//   Then print "All pins:" with AT, RAT, slack detail.
+        optional<float> min_slack = nullopt;
+        string critical_pin;
+        while(!fanin_edges.empty()){
+            min_slack = nullopt;
+            for (const auto& edge : fanin_edges) {
+                const string_view& previous_pin_name = edge.pin; //因为是从fanin_中取出的，所以是前驱节点
+                const Pin* previous_pin = tg.lookup_pin(string(previous_pin_name));
+                if(min_slack == nullopt || slack(previous_pin) < min_slack.value()){
+                    min_slack = slack(previous_pin);
+                    critical_pin = string(previous_pin_name);
+                }
+            }
+            path.push_back(critical_pin);
+            fanin_edges = tg.fanin(critical_pin);
+        }
+        reverse(path.begin(), path.end());
+        return path;
+    }
 
+    void TimingEngine::print_report(const TimingGraph& tg) const {
+        // Collect all (pin_name, slack) pairs, sort ascending (worst first)
+        vector<pair<string, float>> pin_slacks;
+        for (const auto& cell : tg.cells()) {
+            for (const auto& pin : cell.Pins) {
+                string qname = cell.name + "/" + pin.name;
+                pin_slacks.emplace_back(qname, slack(&pin));
+            }
+        }
+        sort(pin_slacks.begin(), pin_slacks.end(),
+             [](const auto& a, const auto& b) { return a.second < b.second; });
+
+        cout << "\n=== Timing Report ===\n";
+
+        // Top 5 worst slacks
+        cout << "Worst slacks:\n";
+        int n = min(5, (int)pin_slacks.size());
+        for (int i = 0; i < n; ++i) {
+            cout << "  " << pin_slacks[i].first
+                 << "  slack = " << pin_slacks[i].second << '\n';
+        }
+
+        // All pins detail
+        cout << "\nAll pins:\n";
+        for (const auto& cell : tg.cells()) {
+            for (const auto& pin : cell.Pins) {
+                string qname = cell.name + "/" + pin.name;
+                string at = pin.arrival_time.has_value()
+                                ? to_string(pin.arrival_time.value())
+                                : "N/A";
+                string rat = pin.req_time.has_value()
+                                ? to_string(pin.req_time.value())
+                                : "N/A";
+                cout << "  " << qname
+                     << "  AT=" << at
+                     << "  RAT=" << rat
+                     << "  slack=" << slack(&pin) << '\n';
+            }
+        }
+    }
 } // namespace tsta

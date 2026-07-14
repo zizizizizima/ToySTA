@@ -15,7 +15,25 @@ namespace tsta {
             //Backward propagation: computes req_time for all pins.
             void propagate_required_time(TimingGraph& tg, float clock_period);
             //Slack = RAT - AT (negative = setup timing violation)
-            static float slack(const Pin& pin);
+            static float slack(const Pin* pin);
+            vector<string> trace_critical_path(const TimingGraph& tg, const string& endpoint) const;
+            void print_report(const TimingGraph& tg) const;
+
+// === Phase 4: Critical Path + Reporting ===
+//
+//     // Trace the worst path backward from endpoint to startpoint.
+//     // At each step, pick the fanin predecessor with the smallest slack.
+//     // Returns a vector of pin names from startpoint → endpoint.
+//     // Use std::reverse() at the end (path is built backward).
+//     std::vector<std::string> trace_critical_path(
+//         const TimingGraph& tg, const std::string& endpoint) const;
+//
+//     // Print a timing report.
+//     //   - Collect all (pin_name, slack) pairs
+//     //   - Sort by slack ascending (worst first) using std::sort + lambda
+//     //   - Print top 5 worst slacks, then all pins
+//     void print_report(const TimingGraph& tg);
+// };
     };
 // class TimingEngine {
 // public:
@@ -51,21 +69,7 @@ namespace tsta {
 //     // Slack = RAT - AT (negative = setup timing violation)
 //     static float slack(const Pin& pin);
 //
-// === Phase 4: Critical Path + Reporting ===
-//
-//     // Trace the worst path backward from endpoint to startpoint.
-//     // At each step, pick the fanin predecessor with the smallest slack.
-//     // Returns a vector of pin names from startpoint → endpoint.
-//     // Use std::reverse() at the end (path is built backward).
-//     std::vector<std::string> trace_critical_path(
-//         const TimingGraph& tg, const std::string& endpoint) const;
-//
-//     // Print a timing report.
-//     //   - Collect all (pin_name, slack) pairs
-//     //   - Sort by slack ascending (worst first) using std::sort + lambda
-//     //   - Print top 5 worst slacks, then all pins
-//     void print_report(const TimingGraph& tg);
-// };
+
 
 // #include headers you need:
 //   <queue> (worklist), <string>, <vector>, <algorithm> (Phase 4),
